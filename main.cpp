@@ -20,25 +20,31 @@
  *          ListDump(&lst)                  - make a png pic of your list
 */
 
+// interface for cap, size
+
 int main(void)
 {
     List lst = {};
-    ListCtor(&lst, 10);
+    ListCtor(&lst, 3);
 
     int * val = 0;
 
     /* Code Sample */
 
-    ListInsert(&lst, 0, 15);
-    ListInsert(&lst, 0, 25);
-    ListInsert(&lst, 0, 40);
-    ListDelete(&lst, 2);
-    ListInsert(&lst, 1, 30);
+    ListInsert(&lst, 0, 3);
+    ListInsert(&lst, 0, 20);
+    ListInsert(&lst, 0, 17);
+    ListInsert(&lst, 1, 18);
+    ListInsert(&lst, 1, 22);
+    ListInsert(&lst, 1, 22);
+    ListInsert(&lst, 1, 22);
+    // ListInsert(&lst, 1, 22);
+    // ListInsert(&lst, 1, 22);
+    // ListInsert(&lst, 1, 22);
 
-    ListSetElem(&lst, 2, 54);
 
     ListDump(&lst, "out.dot");
-    ListPrint(&lst, 15);
+    ListPrint(&lst, 6);
 
     ListDtor(&lst);
 

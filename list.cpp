@@ -1,85 +1,94 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "list.h"
 
 int ListCtor(List * lst, size_t capacity)
 {
-    lst->elements =     (int*) calloc(capacity * 2, sizeof(int));
+    lst->cap = capacity + 1;
+
+    lst->elements =     (int*) calloc(lst->cap, sizeof(int));
     if (!lst->elements)                    return ALLOCATE_ERROR;
 
-    lst->next =         (int*) calloc(capacity * 2, sizeof(int));
+    lst->next =         (int*) calloc(lst->cap, sizeof(int));
     if (!lst->next)                        return ALLOCATE_ERROR;
 
-    lst->prev =         (int*) calloc(capacity * 2, sizeof(int));
+    lst->prev =         (int*) calloc(lst->cap, sizeof(int));
     if (!lst->prev)                        return ALLOCATE_ERROR;
 
-    lst->cap = capacity;
 
-    lst->next[0] = 1;
-    lst->next[capacity - 1] = 0;
-    for (size_t i = 1; i < capacity * 2; i++)
+    for (size_t i = 1; i < capacity; i++)
         lst->elements[i] = PZN;
 
-    for (size_t i = 1; i < capacity - 1; i++)
+    for (size_t i = 1; i < capacity; i++)
         lst->next[i] = i + 1;
 
-    for (size_t i = capacity; i < capacity * 2; i++)
-        lst->next[i] = i + 1;
-
-    lst->prev[0] = (int) (capacity - 1);
-    lst->prev[1] = 0;
-    for (size_t i = 2; i < capacity; i++)
+    for (size_t i = 1; i < capacity; i++)
         lst->prev[i] = i - 1;
 
+
     lst->free = 1;
-    lst->size = 1;
+    lst->size = 0;
+
+    lst->next[0] = 0;
+    lst->prev[0] = 0;
 
     return SUCCESS;
 
 }
 
+int ListRealloc(List * lst)
+{
+    // printf("REALLOC\n");
+
+    int * check1 = (int*) realloc(lst->elements, 2 * lst->cap * sizeof(int));
+    if (!check1) return ALLOCATE_ERROR;
+    lst->elements = check1;
+
+    for (size_t i = lst->cap - 1; i < lst->cap * 2; i++)
+        lst->elements[i] = PZN;
+
+    int * check2 = (int*) realloc(lst->next, 2 * lst->cap * sizeof(int));
+    if (!check2) return ALLOCATE_ERROR;
+    lst->next = check2;
+
+    for (size_t i = lst->cap - 1; i < lst->cap * 2; i++)
+        lst->next[i] = i + 1;
+
+    int * check3 = (int*) realloc(lst->prev, 2 * lst->cap * sizeof(int));
+    if (!check3) return ALLOCATE_ERROR;
+    lst->prev = check3;
+
+    for (size_t i = lst->cap - 1; i < lst->cap * 2; i++)
+        lst->prev[i] = i - 1;
+
+    lst->cap *= 2;
+
+    return SUCCESS;
+}
+
 int ListInsert(List * lst, size_t index, int num)
 {
-    if ((lst->cap - lst->size) <= 0) return fprintf(stderr, "List Overflow! Insert Unavailable.");
+    int check = 0;
+    if (index > lst->size) return -fprintf(stderr, "Wrong Index!\n");
+    if (lst->size >= lst->cap - 2) check = ListRealloc(lst);
+    if (check != SUCCESS) return -fprintf(stderr, "Error in realloc!");
 
-    int new_free = lst->next[lst->free];
-    int old_next = lst->next[index];
-
-    if (lst->next[index] == -1 && lst->elements[index] != PZN)
-    {
-        lst->elements[lst->free] = num;
-        lst->next[index] = lst->free;
-
-        lst->next[lst->free] = -1;
-        lst->prev[lst->free] = index;
-        lst->free = new_free;
-        lst->size++;
-        return SUCCESS;
-    }
-
-    if (lst->elements[old_next] && lst->elements[old_next] != PZN)
-    {
-        lst->elements[lst->free] = num;
-        lst->next[index] = lst->free;
-
-        lst->prev[lst->free] = index;
-
-        lst->next[lst->free] = old_next;
-        lst->prev[old_next] = lst->free;
-        if (lst->next[old_next] == lst->prev[old_next]) lst->next[old_next] = new_free;
-        lst->free = new_free;
-        lst->size++;
-
-        return SUCCESS;
-    }
+    int next_free = lst->next[lst->free];
 
     lst->elements[lst->free] = num;
+
+    int old_next = lst->next[index];
+
     lst->next[index] = lst->free;
     lst->prev[lst->free] = index;
-    lst->next[lst->free] = -1;
-    lst->free = new_free;
+
+    lst->next[lst->free] = old_next;
+    lst->prev[old_next] = lst->free;
+
+    lst->free = next_free;
     lst->size++;
 
     return SUCCESS;
@@ -99,7 +108,7 @@ int ListDelete(List * lst, size_t index)
     lst->next[lst->free] = old_free;
     lst->prev[old_free] = lst->free;
 
-    lst->elements[index] = -111;
+    lst->elements[index] = PZN;
     lst->size--;
 
     return SUCCESS;
@@ -126,17 +135,18 @@ int ListPrint(List * lst, size_t num)
 
     printf("    lst.free = %lu\n", lst->free);
     printf("    lst.size = %lu\n", lst->size);
+    printf("    lst.cap = %lu\n", lst->cap);
     printf("------------------------------------------------------------\n\n");
 
     return SUCCESS;
 }
 
-int * ListGetElem(List * lst, size_t index)
+int * ListGetElem(List * lst, size_t index) // GetElemAdr
 {
     return &(lst->elements[index]);
 }
 
-int ListSetElem(List * lst, size_t index, int val)
+int ListSetElem(List * lst, size_t index, int val) // --
 {
     lst->elements[index] = val;
     return SUCCESS;
@@ -156,6 +166,7 @@ int ListGetPrev(List * lst, size_t index)
 int ListDump(List * lst, const char * OutName)
 {
     FILE * Out = fopen(OutName, "wb");
+    FILE * Out = fopen()
 
     char * OutBuf = (char*) calloc(OUTBUF_SIZE, sizeof(char));
     char * ptr = OutBuf;
@@ -177,7 +188,7 @@ int ListDump(List * lst, const char * OutName)
     {
         if (lst->elements[i] != PZN)
         {
-            if (i == lst->size - 1)
+            if (i == lst->size)
             {
                 sprintf(ptr, "node%d [weight = 1000; color = white]\n", i);
                 while (*ptr) ptr++;
@@ -192,7 +203,7 @@ int ListDump(List * lst, const char * OutName)
 
     for (int i = 0; i < lst->cap; i++)
     {
-        if (lst->next[i] != -1 && lst->prev[i] != -1 && lst->elements[i] != PZN)
+        if (lst->elements[i] != PZN)
         {
             sprintf(ptr, "node%d -> node%d [color = red]\nnode%d -> node%d [color = blue]\n", i, lst->next[i], i, lst->prev[i]);
             while (*ptr) ptr++;
@@ -218,9 +229,12 @@ int ListDump(List * lst, const char * OutName)
 
 int ListDtor(List * lst)
 {
-    if (lst->elements)  free(lst->elements);
-    if (lst->next)      free(lst->next);
-    if (lst->prev)      free(lst->prev);
+    free(lst->elements);
+    free(lst->next);
+    free(lst->prev);
+
     return SUCCESS;
 }
+
+// GetHead, GetTail
 

@@ -25,6 +25,8 @@ struct List
 int ListCtor(List * lst, size_t capacity);
 int ListInsert(List * lst, size_t index, int num);
 int ListDelete(List * lst, size_t index);
+int ListRealloc(List * lst);
+
 int ListPrint(List * lst, size_t num);
 int ListDump(List * lst, const char * OutName);
 int ListDtor(List * lst);
