@@ -2,12 +2,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "list.h"
 
 int ListCtor(List * lst, size_t capacity)
 {
-    lst->cap = capacity + 1;
+    lst->cap = capacity;
 
     lst->elements =     (int*) calloc(lst->cap, sizeof(int));
     if (!lst->elements)                    return ALLOCATE_ERROR;
@@ -41,7 +42,6 @@ int ListCtor(List * lst, size_t capacity)
 
 int ListRealloc(List * lst)
 {
-    // printf("REALLOC\n");
 
     int * check1 = (int*) realloc(lst->elements, 2 * lst->cap * sizeof(int));
     if (!check1) return ALLOCATE_ERROR;
@@ -94,8 +94,10 @@ int ListInsert(List * lst, size_t index, int num)
     return SUCCESS;
 }
 
-int ListDelete(List * lst, size_t index)
+int ListDelete(List * lst, size_t index, int * ret)
 {
+    if (lst->elements[index] == PZN) return -fprintf(stderr, "Element Already Deleted! Try Another!\n");
+
     int old_free = lst->free;
     lst->free = index;
 
@@ -108,6 +110,7 @@ int ListDelete(List * lst, size_t index)
     lst->next[lst->free] = old_free;
     lst->prev[old_free] = lst->free;
 
+    *ret = lst->elements[index];
     lst->elements[index] = PZN;
     lst->size--;
 
@@ -115,41 +118,9 @@ int ListDelete(List * lst, size_t index)
 
 }
 
-int ListPrint(List * lst, size_t num)
-{
-    printf("-------------------------------------------------------\n");
-    for (int i = 0; i < num; i++)
-        printf("%3d ", lst->elements[i]);
-
-    printf("\n");
-
-    for (int i = 0; i < num; i++)
-        printf("%3d ", lst->next[i]);
-
-    printf("\n");
-
-    for (int i = 0; i < num; i++)
-        printf("%3d ", lst->prev[i]);
-
-    printf("\n\n");
-
-    printf("    lst.free = %lu\n", lst->free);
-    printf("    lst.size = %lu\n", lst->size);
-    printf("    lst.cap = %lu\n", lst->cap);
-    printf("------------------------------------------------------------\n\n");
-
-    return SUCCESS;
-}
-
 int * ListGetElem(List * lst, size_t index) // GetElemAdr
 {
     return &(lst->elements[index]);
-}
-
-int ListSetElem(List * lst, size_t index, int val) // --
-{
-    lst->elements[index] = val;
-    return SUCCESS;
 }
 
 int ListGetNext(List * lst, size_t index)
@@ -162,11 +133,97 @@ int ListGetPrev(List * lst, size_t index)
     return lst->prev[index];
 }
 
+int * ListGetHead(List * lst)
+{
+    return &lst->prev[0];
+}
+
+int * ListGetTail(List * lst)
+{
+    return &lst->next[0];
+}
+
+int ListPushHead(List * lst, int num)
+{
+    ListInsert(lst, lst->prev[0], num);
+    return SUCCESS;
+}
+
+int ListPushTail(List * lst, int num)
+{
+    ListInsert(lst, 0, num);
+    return SUCCESS;
+}
+
+int ListPopTail(List * lst, int * ret)
+{
+    ListDelete(lst, lst->prev[0], ret);
+    return SUCCESS;
+}
+
+int ListPopHead(List * lst, int * ret)
+{
+    ListDelete(lst, lst->next[0], ret);
+    return SUCCESS;
+}
+size_t ListGetSize(List * lst, int num)
+{
+    return lst->size;
+}
+
+size_t ListGetCap(List * lst, int num)
+{
+    return lst->cap;
+}
+
+int ListPrint(FILE * src, List * lst, size_t num)
+{
+    fprintf(src, "-------------------------------------------------------\n");
+    for (int i = 0; i < num; i++)
+        fprintf(src,"%3d ", lst->elements[i]);
+
+    fprintf(src, "\n");
+
+    for (int i = 0; i < num; i++)
+        fprintf(src, "%3d ", lst->next[i]);
+
+    fprintf(src, "\n");
+
+    for (int i = 0; i < num; i++)
+        fprintf(src, "%3d ", lst->prev[i]);
+
+    fprintf(src, "\n\n");
+
+    fprintf(src, "    lst.free = %lu\n", lst->free);
+    fprintf(src, "    lst.size = %lu\n", lst->size);
+    fprintf(src, "    lst.cap = %lu\n", lst->cap);
+    fprintf(src, "------------------------------------------------------------\n\n");
+
+    return SUCCESS;
+}
 
 int ListDump(List * lst, const char * OutName)
 {
-    FILE * Out = fopen(OutName, "wb");
-    FILE * Out = fopen()
+    size_t size = strlen(OutName) * 2;
+    char  * FileName = (char*) calloc(size, sizeof(char));
+
+    sprintf(FileName, "%s", OutName);
+
+    while (access(FileName, F_OK) == 0)
+    {
+        if (strlen(FileName) >= size - 1)
+        {
+            size *= 2;
+            FileName = (char*) realloc(FileName, size);
+        }
+        sprintf(FileName, "%s_", FileName);
+    }
+
+    char * HtmName = (char*) calloc(strlen(FileName) + 10, sizeof(char));
+    sprintf(HtmName, "%s.htm", FileName);
+
+    FILE * Out = fopen(FileName, "wb");
+    FILE * Htm = fopen(HtmName, "wb");
 
     char * OutBuf = (char*) calloc(OUTBUF_SIZE, sizeof(char));
     char * ptr = OutBuf;
@@ -188,7 +245,7 @@ int ListDump(List * lst, const char * OutName)
     {
         if (lst->elements[i] != PZN)
         {
-            if (i == lst->size)
+            if (i >= lst->size && lst->elements[i + 1] == PZN)
             {
                 sprintf(ptr, "node%d [weight = 1000; color = white]\n", i);
                 while (*ptr) ptr++;
@@ -216,13 +273,21 @@ int ListDump(List * lst, const char * OutName)
     printf("%s", OutBuf);
 
     fwrite(OutBuf, strlen(OutBuf), sizeof(char), Out);
-    sprintf(command, "dot %s -T png -o %s.png", OutName, OutName);
+    sprintf(command, "dot %s -T png -o %s.png", FileName, FileName);
+
+    fprintf(Htm, "<pre>\n");
+
+    ListPrint(Htm, lst, lst->cap);
+    fprintf(Htm, "<img src=%s.png width=20%%>", FileName);
 
     fclose(Out);
+    fclose(Htm);
     system(command);
 
     free(OutBuf);
     free(command);
+    free(FileName);
+    free(HtmName);
 
     return SUCCESS;
 }
@@ -235,6 +300,3 @@ int ListDtor(List * lst)
 
     return SUCCESS;
 }
-
-// GetHead, GetTail
-

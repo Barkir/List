@@ -1,0 +1,17 @@
+digraph
+{
+node0 [shape = Mrecord; label = "{0 | next = 2 | prev = 3}"]
+node1 [shape = Mrecord; label = "{20 | next = 3 | prev = 2}"]
+node2 [shape = Mrecord; label = "{30 | next = 1 | prev = 0}"]
+node3 [shape = Mrecord; label = "{80 | next = 0 | prev = 1}"]
+node0 -> node1 -> node2 -> node3 [weight = 1000; color = white]
+node0 -> node2 [color = red]
+node0 -> node3 [color = blue]
+node1 -> node3 [color = red]
+node1 -> node2 [color = blue]
+node2 -> node1 [color = red]
+node2 -> node0 [color = blue]
+node3 -> node0 [color = red]
+node3 -> node1 [color = blue]
+
+}

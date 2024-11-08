@@ -9,42 +9,44 @@
  *
  *  Available functions:
  *          ListInsert(&lst, index, num)    - inserts an element into list
- *          ListDelete(&lst, index)         - deletes an element out of list
+ *          ListDelete(&lst, index, ret)    - deletes an element out of list
  *
- *          ListSetElem(&lst, index, num)   - sets an element by index
- *          ListGetElem(&lst, index)        - gets adr of element by index
- *          ListGetNext(&lst, index)        - gets next index of element by index
- *          ListGetPrev(&lst, index)        - gets prev index of element by index
+ *          ListPushTail(&lst, num)         - inserts an element after tail
+ *          ListPushHead(&lst, num)         - inserts an element after head
+ *
+ *          ListPopTail(&lst, ret)          - pop an element in tail
+ *          LisPopHead(&lst, ret)           - pop an element in head
+ *
+ *          ListGetElem(&lst, index)        - returns adr of element by index
+ *          ListGetNext(&lst, index)        - returns next index of element by index
+ *          ListGetPrev(&lst, index)        - returns prev index of element by index
+ *          ListGetCap(&lst)                - returns list capacity
+ *          ListGetSize(&lst)               - returns list size
+ *          ListGetHead(&lst)               - returns adr of list head
+ *          ListGetTail(&lst)               - returns adr of list tail
  *
  *          ListPrint(&lst, count)          - dumps list and info in stdout
- *          ListDump(&lst)                  - make a png pic of your list
+ *          ListDump(&lst, filename)        - make a png pic of your list and creates
+ *                                            an htm file with dump and png pic
+ *
 */
-
-// interface for cap, size
 
 int main(void)
 {
     List lst = {};
     ListCtor(&lst, 3);
 
-    int * val = 0;
+    int val = 0;
 
     /* Code Sample */
 
-    ListInsert(&lst, 0, 3);
-    ListInsert(&lst, 0, 20);
-    ListInsert(&lst, 0, 17);
-    ListInsert(&lst, 1, 18);
-    ListInsert(&lst, 1, 22);
-    ListInsert(&lst, 1, 22);
-    ListInsert(&lst, 1, 22);
-    // ListInsert(&lst, 1, 22);
-    // ListInsert(&lst, 1, 22);
-    // ListInsert(&lst, 1, 22);
+    ListPushTail(&lst, 20);
+    ListPushTail(&lst, 30);
+    ListPushHead(&lst, 80);
+    ListPushHead(&lst, 70);
+    ListPopTail(&lst, &val);
 
-
-    ListDump(&lst, "out.dot");
-    ListPrint(&lst, 6);
+    ListDump(&lst, "out");
 
     ListDtor(&lst);
 
